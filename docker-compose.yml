@@ -1,0 +1,26 @@
+services:
+  # ─── Web Frontend ───
+  web:
+    container_name: mtg-hand-oracle
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - external_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mtg-hand-oracle.rule=Host(`${MTG_DOMAIN}`)"
+      - "traefik.http.routers.mtg-hand-oracle.entrypoints=websecure"
+      - "traefik.http.routers.mtg-hand-oracle.tls=true"
+      - "traefik.http.services.mtg-hand-oracle.loadbalancer.server.port=80"
+      - "traefik.docker.network=external_network"
+
+      # ─── Cache Control Middleware ───
+      - "traefik.http.middlewares.mtg-hand-oracle-nocache.headers.customresponseheaders.Cache-Control=no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+      - "traefik.http.routers.mtg-hand-oracle.middlewares=mtg-hand-oracle-nocache"
+
+networks:
+  external_network:
+    external: true
+    name: external_network
