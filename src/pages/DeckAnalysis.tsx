@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useDeck } from '../context/DeckContext';
 import { buildManaCurve, analyzeColorDistribution, analyzeColorRequirements, getDeckStats, analyzeLandColors } from '../utils/manaAnalysis';
 import { getRampCount } from '../utils/rampDetector';
+import Recommendations from '../components/Recommendations';
 import type { CardData } from '../types';
 
 const COLOR_HEX: Record<string, string> = {
@@ -207,17 +208,8 @@ export default function DeckAnalysis() {
         </div>
       )}
 
-      <div className="analysis-actions">
-        <button className="btn-primary btn-large" onClick={() => navigate('/simulator')}>
-          🎲 Simulate Starting Hands
-        </button>
-        <button className="btn-primary btn-large" onClick={() => navigate('/simulation')}>
-          📊 Run Statistical Simulation
-        </button>
-        <button className="btn-secondary" onClick={() => navigate('/')}>
-          ← Import New Deck
-        </button>
-      </div>
+      <Recommendations />
+
     </div>
   );
 }

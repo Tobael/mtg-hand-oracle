@@ -13,6 +13,17 @@ export interface CardData {
   imageSmall: string | null;
   rarity: string;
   produced_mana: string[];
+  set: string;
+  collector_number: string;
+}
+
+export interface SavedDeck {
+  id: string;
+  name: string;
+  date: string;
+  text: string;
+  format: DeckFormat;
+  customTags?: Record<string, string[]>;
 }
 
 // =================== Deck Types ===================

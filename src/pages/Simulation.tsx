@@ -301,11 +301,6 @@ export default function Simulation() {
         </div>
       )}
 
-      <div className="analysis-actions">
-        <button className="btn-secondary" onClick={() => navigate('/analysis')}>← Back to Analysis</button>
-        <button className="btn-secondary" onClick={() => navigate('/simulator')}>🎲 Manual Simulator</button>
-        <button className="btn-secondary" onClick={() => navigate('/')}>Import New Deck</button>
-      </div>
     </div>
   );
 }

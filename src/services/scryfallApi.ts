@@ -33,6 +33,8 @@ interface ScryfallCard {
   }>;
   rarity?: string;
   produced_mana?: string[];
+  set?: string;
+  collector_number?: string;
 }
 
 interface ScryfallCollectionResponse {
@@ -84,6 +86,12 @@ export async function fetchCardData(cardNames: string[]): Promise<Map<string, Ca
         const key = processed.name.toLowerCase();
         cardCache.set(key, processed);
         result.set(key, processed);
+
+        if (key.includes(' // ')) {
+          const frontName = key.split(' // ')[0];
+          cardCache.set(frontName, processed);
+          result.set(frontName, processed);
+        }
       }
 
       if (data.not_found?.length) {
@@ -119,9 +127,31 @@ function processCard(card: ScryfallCard): CardData {
     imageSmall: imageSmall,
     rarity: card.rarity || 'common',
     produced_mana: card.produced_mana || [],
+    set: card.set || '',
+    collector_number: card.collector_number || '',
   };
 }
 
 export function clearCache(): void {
   cardCache.clear();
+}
+
+export async function fetchCardPrintings(cardName: string): Promise<CardData[]> {
+  try {
+    const encodedName = encodeURIComponent(`!"${cardName}"`);
+    const response = await fetch(`${SCRYFALL_BASE}/cards/search?q=${encodedName}&unique=prints`);
+
+    if (!response.ok) {
+      console.error(`Scryfall API error fetching printings for ${cardName}: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    if (!data.data) return [];
+
+    return data.data.map((c: ScryfallCard) => processCard(c));
+  } catch (err) {
+    console.error('Failed to fetch printings from Scryfall:', err);
+    return [];
+  }
 }

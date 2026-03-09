@@ -97,13 +97,21 @@ const SAMPLE_DECK_COMMANDER = `// Commander
 3 Swamp`;
 
 export default function DeckImport() {
-  const { importDeck, loading, error, deckFormat, setDeckFormat } = useDeck();
+  const { importDeck, loading, error, deckFormat, setDeckFormat, savedDecks, loadDeck, deleteDeck, activeDeckId } = useDeck();
   const [text, setText] = useState('');
+  const [deckName, setDeckName] = useState('');
   const navigate = useNavigate();
 
   const handleImport = async () => {
     if (!text.trim()) return;
-    const success = await importDeck(text);
+    const success = await importDeck(text, deckName.trim());
+    if (success) {
+      navigate('/analysis');
+    }
+  };
+
+  const handleLoadDeck = async (id: string) => {
+    const success = await loadDeck(id);
     if (success) {
       navigate('/analysis');
     }
@@ -115,79 +123,128 @@ export default function DeckImport() {
   };
 
   return (
-    <div className="page deck-import">
-      <div className="import-container">
-        <div className="import-header">
-          <div className="import-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <path d="M14 2v6h6" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <polyline points="9,15 12,12 15,15" />
-            </svg>
-          </div>
-          <h1>Import Your Deck</h1>
-          <p className="subtitle">Paste your decklist below to analyze mana curves, detect ramp, and simulate starting hands</p>
-        </div>
+    <div className="page deck-import deck-toolbox">
+      <div className="toolbox-layout">
+        <div className="saved-decks-section">
+          <h2>Deck Toolbox</h2>
+          <p className="subtitle">Select a saved deck to analyze or simulate.</p>
 
-        <div className="format-selector">
-          <button
-            className={`format-btn ${deckFormat === '60-card' ? 'active' : ''}`}
-            onClick={() => setDeckFormat('60-card' as DeckFormat)}
-          >
-            60-Card
-          </button>
-          <button
-            className={`format-btn ${deckFormat === 'commander' ? 'active' : ''}`}
-            onClick={() => setDeckFormat('commander' as DeckFormat)}
-          >
-            Commander
-          </button>
-        </div>
-
-        <div className="textarea-wrapper">
-          <textarea
-            id="deck-input"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={`Paste your decklist here...\n\nFormat:\n4 Lightning Bolt\n4 Monastery Swiftspear\n20 Mountain\n\nSideboard cards (prefixed with "// Sideboard") will be ignored.`}
-            rows={16}
-          />
-          <div className="textarea-footer">
-            <span className="line-count">{text.split('\n').filter(l => l.trim()).length} lines</span>
+          <div className="saved-decks-list">
+            {savedDecks.length === 0 ? (
+              <div className="empty-decks">
+                <p>No recently imported decks.</p>
+                <p>Import a deck below to save it.</p>
+              </div>
+            ) : (
+              savedDecks.map(deck => (
+                <div key={deck.id} className={`saved-deck-card ${deck.id === activeDeckId ? 'active' : ''}`}>
+                  <div className="saved-deck-info" onClick={() => handleLoadDeck(deck.id)}>
+                    <div className="saved-deck-header">
+                      <span className="deck-name">{deck.name}</span>
+                      <span className="deck-format">{deck.format}</span>
+                    </div>
+                    <span className="deck-date">{new Date(deck.date).toLocaleDateString()}</span>
+                  </div>
+                  <button
+                    className="delete-deck-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteDeck(deck.id);
+                    }}
+                    title="Delete Deck"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="sample-buttons">
-          <button className="sample-btn" onClick={() => loadSample('60')}>
-            <span className="sample-icon">⚡</span> Load Burn Sample
-          </button>
-          <button className="sample-btn" onClick={() => loadSample('commander')}>
-            <span className="sample-icon">👑</span> Load Commander Sample
-          </button>
-        </div>
-
-        {error && (
-          <div className="error-message">
-            <span>⚠️</span> {error}
+        <div className="import-container">
+          <div className="import-header">
+            <div className="import-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <polyline points="9,15 12,12 15,15" />
+              </svg>
+            </div>
+            <h1>Import New Deck</h1>
+            <p className="subtitle">Paste your decklist to analyze, simulate, and select card arts.</p>
           </div>
-        )}
 
-        <button
-          id="import-button"
-          className="import-btn"
-          onClick={handleImport}
-          disabled={loading || !text.trim()}
-        >
-          {loading ? (
-            <>
-              <span className="spinner" />
-              Fetching card data...
-            </>
-          ) : (
-            <>Import &amp; Analyze</>
+          <div className="format-selector">
+            <button
+              className={`format-btn ${deckFormat === '60-card' ? 'active' : ''}`}
+              onClick={() => setDeckFormat('60-card')}
+            >
+              60-Card
+            </button>
+            <button
+              className={`format-btn ${deckFormat === 'commander' ? 'active' : ''}`}
+              onClick={() => setDeckFormat('commander')}
+            >
+              Commander
+            </button>
+          </div>
+
+          <div className="deck-name-input-wrapper">
+            <input
+              type="text"
+              id="deck-name-input"
+              value={deckName}
+              onChange={(e) => setDeckName(e.target.value)}
+              placeholder="Deck Name (optional)"
+              className="deck-name-input"
+            />
+          </div>
+
+          <div className="textarea-wrapper">
+            <textarea
+              id="deck-input"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={`Paste your decklist here...\n\nFormat:\n4 Lightning Bolt\n4 Monastery Swiftspear\n20 Mountain\n\nSideboard cards (prefixed with "// Sideboard") will be ignored.`}
+              rows={16}
+            />
+            <div className="textarea-footer">
+              <span className="line-count">{text.split('\n').filter(l => l.trim()).length} lines</span>
+            </div>
+          </div>
+
+          <div className="sample-buttons">
+            <button className="sample-btn" onClick={() => loadSample('60')}>
+              <span className="sample-icon">⚡</span> Load Burn Sample
+            </button>
+            <button className="sample-btn" onClick={() => loadSample('commander')}>
+              <span className="sample-icon">👑</span> Load Commander Sample
+            </button>
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <span>⚠️</span> {error}
+            </div>
           )}
-        </button>
+
+          <button
+            id="import-button"
+            className="import-btn"
+            onClick={handleImport}
+            disabled={loading || !text.trim()}
+          >
+            {loading ? (
+              <>
+                <span className="spinner" />
+                Processing...
+              </>
+            ) : (
+              <>Import &amp; Analyze</>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
