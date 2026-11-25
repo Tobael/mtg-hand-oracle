@@ -8,17 +8,10 @@ services:
     restart: unless-stopped
     networks:
       - external_network
+    # The homelab Anubis router is the only public entrypoint. Never expose a
+    # lower-priority backend router when Anubis stops or becomes unhealthy.
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mtg-hand-oracle.rule=Host(`${MTG_DOMAIN}`)"
-      - "traefik.http.routers.mtg-hand-oracle.entrypoints=websecure"
-      - "traefik.http.routers.mtg-hand-oracle.tls=true"
-      - "traefik.http.services.mtg-hand-oracle.loadbalancer.server.port=80"
-      - "traefik.docker.network=external_network"
-
-      # ─── Cache Control Middleware ───
-      - "traefik.http.middlewares.mtg-hand-oracle-nocache.headers.customresponseheaders.Cache-Control=no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
-      - "traefik.http.routers.mtg-hand-oracle.middlewares=mtg-hand-oracle-nocache"
+      - traefik.enable=false
 
 networks:
   external_network:
